@@ -1,0 +1,9 @@
+fun geometricTerm(
+    n: Int,
+    a1: Double = 1.0,
+    q: Double = 2.0
+): Double {
+    return a1 * Math.pow(q, (n - 1).toDouble())
+}
+
+

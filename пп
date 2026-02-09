@@ -1,0 +1,156 @@
+// ===== 1. Human / Student =====
+
+open class Human(
+    val name: String,
+    val age: Int
+) {
+
+    open val info: String
+        get() = "Human info: name=$name, age=$age"
+
+    open fun printInfo() {
+        println("Human:")
+        println("Name: $name")
+        println("Age: $age")
+    }
+
+    override fun toString(): String {
+        return "Human(name=$name, age=$age)"
+    }
+}
+
+class Student(
+    name: String,
+    age: Int,
+    val group: String
+) : Human(name, age) {
+
+    override val info: String
+        get() = super.info + ", group=$group // student"
+
+    override fun printInfo() {
+        super.printInfo()
+        println("Group: $group")
+    }
+
+    override fun toString(): String {
+        return super.toString() + " -> Student(group=$group)"
+    }
+}
+
+// ===== 2. Abstract Figure / Rectangle =====
+
+abstract class Figure {
+
+    abstract val name: String
+
+    abstract fun area(): Double
+    abstract fun perimeter(): Double
+    abstract fun printInfo()
+}
+
+class Rectangle(
+    val width: Double,
+    val height: Double
+) : Figure() {
+
+    override val name: String = "Rectangle"
+
+    override fun area(): Double = width * height
+
+    override fun perimeter(): Double = 2 * (width + height)
+
+    override fun printInfo() {
+        println("Figure: $name")
+        println("Width: $width")
+        println("Height: $height")
+        println("Area: ${area()}")
+        println("Perimeter: ${perimeter()}")
+    }
+}
+
+// ===== 3. DataSource =====
+
+interface DataSource<T> {
+    fun getNext(): T
+}
+
+class RandomDataSource : DataSource<Int> {
+    override fun getNext(): Int = (0..100).random()
+}
+
+class StaticDataSource<T>(
+    private val data: Array<T>
+) : DataSource<T> {
+
+    private var index = 0
+
+    override fun getNext(): T {
+        val value = data[index]
+        index = (index + 1) % data.size
+        return value
+    }
+}
+
+fun <T> printTen(source: DataSource<T>) {
+    repeat(10) {
+        println(source.getNext())
+    }
+}
+
+// ===== 4. Delegation =====
+
+interface DeliveryService {
+    val serviceName: String
+    fun deliver(orderId: Int)
+}
+
+class FoodService(
+    override val serviceName: String
+) : DeliveryService {
+
+    override fun deliver(orderId: Int) {
+        println("Заказ $orderId передан в доставку через $serviceName")
+    }
+}
+
+class DeliveryApp(
+    service: DeliveryService
+) : DeliveryService by service {
+
+    fun createOrder(orderId: Int) {
+        println("Создан заказ $orderId")
+        deliver(orderId)
+    }
+}
+
+// ===== 5. main =====
+
+fun main() {
+
+    println("=== Human / Student ===")
+    val human = Human("Alex", 30)
+    val student = Student("Ivan", 20, "IKBO-01-23")
+
+    println(human)
+    human.printInfo()
+    println(human.info)
+
+    println()
+
+    println(student)
+    student.printInfo()
+    println(student.info)
+
+    println("\n=== Figure ===")
+    val rectangle = Rectangle(4.0, 6.0)
+    rectangle.printInfo()
+
+    println("\n=== DataSource ===")
+    printTen(RandomDataSource())
+    printTen(StaticDataSource(arrayOf("A", "B", "C")))
+
+    println("\n=== Delivery ===")
+    val app = DeliveryApp(FoodService("Yandex Food"))
+    app.createOrder(123)
+}

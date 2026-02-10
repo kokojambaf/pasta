@@ -1,0 +1,183 @@
+<Window x:Class="PasswordsWpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Пароли" Height="450" Width="700">
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="2*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Таблица -->
+        <ListView x:Name="PasswordsListView">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Сайт / Приложение" Width="200"
+                                    DisplayMemberBinding="{Binding Site}" />
+                    <GridViewColumn Header="Логин" Width="200"
+                                    DisplayMemberBinding="{Binding Login}" />
+                    <GridViewColumn Header="Пароль" Width="200"
+                                    DisplayMemberBinding="{Binding Password}" />
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <!-- Панель ввода -->
+        <StackPanel Grid.Row="1" Margin="0,10,0,0">
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                <TextBox x:Name="SiteBox" Width="150" Margin="0,0,5,0" PlaceholderText="Сайт"/>
+                <TextBox x:Name="LoginBox" Width="150" Margin="0,0,5,0" PlaceholderText="Логин"/>
+                <TextBox x:Name="PasswordBox" Width="150"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <TextBox x:Name="LengthBox" Width="50" Text="8"/>
+                <Button Content="Сгенерировать пароль"
+                        Margin="5,0"
+                        Click="GeneratePassword_Click"/>
+
+                <Button Content="Добавить"
+                        Margin="5,0"
+                        Click="Add_Click"/>
+
+                <Button Content="Показать пароли"
+                        Margin="5,0"
+                        Click="Decrypt_Click"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>
+
+
+
+
+
+
+
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+
+namespace PasswordsWpf
+{
+    // Модель
+    public class PasswordItem
+    {
+        public string Site { get; set; }
+        public string Login { get; set; }
+        public string Password { get; set; }
+    }
+
+    // Весь бэкэнд
+    public static class Backend
+    {
+        private static readonly string FilePath = "passwords.txt";
+
+        private static readonly byte[] Key =
+            Encoding.UTF8.GetBytes("1234567890123456"); // 16 байт
+
+        private static readonly byte[] IV =
+            Encoding.UTF8.GetBytes("6543210987654321"); // 16 байт
+
+        // =======================
+        // 5.1 Загрузка данных
+        // =======================
+        public static List<PasswordItem> Load(bool decrypt = false)
+        {
+            var list = new List<PasswordItem>();
+
+            if (!File.Exists(FilePath))
+                return list;
+
+            foreach (var line in File.ReadAllLines(FilePath))
+            {
+                var parts = line.Split(';');
+                if (parts.Length != 3) continue;
+
+                list.Add(new PasswordItem
+                {
+                    Site = parts[0],
+                    Login = parts[1],
+                    Password = decrypt
+                        ? Decrypt(parts[2])
+                        : parts[2]
+                });
+            }
+
+            return list;
+        }
+
+        // =======================
+        // 5.2 Добавление данных
+        // =======================
+        public static void Add(string site, string login, string password)
+        {
+            string encrypted = Encrypt(password);
+
+            File.AppendAllText(
+                FilePath,
+                $"{site};{login};{encrypted}{Environment.NewLine}"
+            );
+        }
+
+        // =======================
+        // 5.3 Генерация пароля
+        // =======================
+        public static string GeneratePassword(int length)
+        {
+            const string chars =
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+            var rnd = new Random();
+
+            return new string(
+                Enumerable.Range(0, length)
+                .Select(_ => chars[rnd.Next(chars.Length)])
+                .ToArray()
+            );
+        }
+
+        // =======================
+        // 5.4 Шифрование AES
+        // =======================
+        public static string Encrypt(string plainText)
+        {
+            using var aes = Aes.Create();
+            aes.Key = Key;
+            aes.IV = IV;
+
+            var encryptor = aes.CreateEncryptor();
+            byte[] bytes = Encoding.UTF8.GetBytes(plainText);
+
+            return Convert.ToBase64String(
+                encryptor.TransformFinalBlock(bytes, 0, bytes.Length)
+            );
+        }
+
+        // =======================
+        // 5.5 Дешифрование AES
+        // =======================
+        public static string Decrypt(string cipherText)
+        {
+            using var aes = Aes.Create();
+            aes.Key = Key;
+            aes.IV = IV;
+
+            var decryptor = aes.CreateDecryptor();
+            byte[] bytes = Convert.FromBase64String(cipherText);
+
+            return Encoding.UTF8.GetString(
+                decryptor.TransformFinalBlock(bytes, 0, bytes.Length)
+            );
+        }
+    }
+}

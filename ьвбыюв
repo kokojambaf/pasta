@@ -1,0 +1,153 @@
+Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Таблица -->
+        <ListView x:Name="PasswordsList">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Сайт" Width="200" DisplayMemberBinding="{Binding Site}" />
+                    <GridViewColumn Header="Логин" Width="200" DisplayMemberBinding="{Binding Login}" />
+                    <GridViewColumn Header="Пароль" Width="200" DisplayMemberBinding="{Binding Password}" />
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <!-- Панель управления -->
+        <StackPanel Grid.Row="1" Margin="0,10,0,0">
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                <TextBox x:Name="SiteBox" Width="150" Margin="5" />
+                <TextBox x:Name="LoginBox" Width="150" Margin="5" />
+                <TextBox x:Name="PasswordBox" Width="150" Margin="5" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <TextBox x:Name="LengthBox" Width="50" Text="8" Margin="5"/>
+                <Button Content="Сгенерировать" Click="Generate_Click" Margin="5"/>
+                <Button Content="Добавить" Click="Add_Click" Margin="5"/>
+                <Button Content="Показать пароли" Click="Decrypt_Click" Margin="5"/>
+            </StackPanel>
+
+        </StackPanel>
+    </Grid>
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Windows;
+
+namespace PasswordsWpf
+{
+    public partial class MainWindow : Window
+    {
+        string filePath = "passwords.txt";
+
+        byte[] Key = Encoding.UTF8.GetBytes("1234567890123456");
+        byte[] IV  = Encoding.UTF8.GetBytes("6543210987654321");
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            LoadData(false);
+        }
+
+        // ===== Модель =====
+        class PasswordItem
+        {
+            public string Site { get; set; }
+            public string Login { get; set; }
+            public string Password { get; set; }
+        }
+
+        // ===== Загрузка =====
+        void LoadData(bool decrypt)
+        {
+            PasswordsList.Items.Clear();
+
+            if (!File.Exists(filePath))
+                return;
+
+            foreach (var line in File.ReadAllLines(filePath))
+            {
+                var p = line.Split(';');
+                if (p.Length != 3) continue;
+
+                PasswordsList.Items.Add(new PasswordItem
+                {
+                    Site = p[0],
+                    Login = p[1],
+                    Password = decrypt ? Decrypt(p[2]) : p[2]
+                });
+            }
+        }
+
+        // ===== Добавление =====
+        private void Add_Click(object sender, RoutedEventArgs e)
+        {
+            string encrypted = Encrypt(PasswordBox.Text);
+
+            File.AppendAllText(filePath,
+                $"{SiteBox.Text};{LoginBox.Text};{encrypted}\n");
+
+            LoadData(false);
+
+            SiteBox.Clear();
+            LoginBox.Clear();
+            PasswordBox.Clear();
+        }
+
+        // ===== Генерация пароля =====
+        private void Generate_Click(object sender, RoutedEventArgs e)
+        {
+            int length = int.Parse(LengthBox.Text);
+            const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            var rnd = new Random();
+
+            PasswordBox.Text = new string(
+                Enumerable.Range(0, length)
+                .Select(_ => chars[rnd.Next(chars.Length)])
+                .ToArray()
+            );
+        }
+
+        // ===== Показ расшифрованных =====
+        private void Decrypt_Click(object sender, RoutedEventArgs e)
+        {
+            LoadData(true);
+        }
+
+        // ===== AES =====
+        string Encrypt(string text)
+        {
+            using var aes = Aes.Create();
+            aes.Key = Key;
+            aes.IV = IV;
+
+            var enc = aes.CreateEncryptor();
+            byte[] data = Encoding.UTF8.GetBytes(text);
+
+            return Convert.ToBase64String(enc.TransformFinalBlock(data, 0, data.Length));
+        }
+
+        string Decrypt(string text)
+        {
+            using var aes = Aes.Create();
+            aes.Key = Key;
+            aes.IV = IV;
+
+            var dec = aes.CreateDecryptor();
+            byte[] data = Convert.FromBase64String(text);
+
+            return Encoding.UTF8.GetString(dec.TransformFinalBlock(data, 0, data.Length));
+        }
+    }
+}

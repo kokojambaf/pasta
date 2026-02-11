@@ -1,0 +1,143 @@
+using System;
+using System.Data;
+using System.Diagnostics;
+using Terminal.Gui;
+
+class Program
+{
+    static DataTable processTable = new DataTable();
+    static TableView tableView;
+
+    static void Main()
+    {
+        Application.Init();
+
+        var top = Application.Top;
+
+        var win = new Window("Process Manager")
+        {
+            X = 0,
+            Y = 1,
+            Width = Dim.Fill(),
+            Height = Dim.Fill()
+        };
+
+        top.Add(win);
+
+        // Создаем таблицу
+        processTable.Columns.Add("Id", typeof(int));
+        processTable.Columns.Add("ProcessName", typeof(string));
+        processTable.Columns.Add("WorkingSet64 (MB)", typeof(string));
+
+        LoadProcesses();
+
+        tableView = new TableView()
+        {
+            X = 0,
+            Y = 0,
+            Width = Dim.Fill(),
+            Height = Dim.Fill(3),
+            Table = processTable
+        };
+
+        win.Add(tableView);
+
+        // Кнопка запуска процесса
+        var startButton = new Button("Запустить")
+        {
+            X = 0,
+            Y = Pos.Bottom(tableView) + 1
+        };
+
+        startButton.Clicked += () =>
+        {
+            var dialog = new Dialog("Запуск процесса", 60, 10);
+
+            var textField = new TextField("")
+            {
+                X = 1,
+                Y = 1,
+                Width = 40
+            };
+
+            var ok = new Button("OK")
+            {
+                X = 1,
+                Y = 3
+            };
+
+            ok.Clicked += () =>
+            {
+                try
+                {
+                    Process.Start(textField.Text.ToString());
+                    LoadProcesses();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.ErrorQuery("Ошибка", ex.Message, "OK");
+                }
+
+                Application.RequestStop();
+            };
+
+            dialog.Add(textField, ok);
+            Application.Run(dialog);
+        };
+
+        // Кнопка завершения процесса
+        var killButton = new Button("Завершить")
+        {
+            X = Pos.Right(startButton) + 2,
+            Y = Pos.Bottom(tableView) + 1
+        };
+
+        killButton.Clicked += () =>
+        {
+            int selectedRow = tableView.SelectedRow;
+
+            if (selectedRow < 0)
+                return;
+
+            int processId = (int)processTable.Rows[selectedRow]["Id"];
+
+            try
+            {
+                var proc = Process.GetProcessById(processId);
+                proc.Kill();
+                proc.WaitForExit();
+                LoadProcesses();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.ErrorQuery("Ошибка", ex.Message, "OK");
+            }
+        };
+
+        win.Add(startButton, killButton);
+
+        Application.Run();
+        Application.Shutdown();
+    }
+
+    static void LoadProcesses()
+    {
+        processTable.Rows.Clear();
+
+        foreach (var proc in Process.GetProcesses())
+        {
+            try
+            {
+                processTable.Rows.Add(
+                    proc.Id,
+                    proc.ProcessName,
+                    (proc.WorkingSet64 / 1024 / 1024) + " MB"
+                );
+            }
+            catch
+            {
+                // Некоторые процессы могут не дать доступ
+            }
+        }
+    }
+}

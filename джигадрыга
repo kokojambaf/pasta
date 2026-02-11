@@ -207,3 +207,22 @@ namespace FileManager
         }
 
         // ===== Ввод пути вручную =====
+private void PathTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                if (Directory.Exists(PathTextBox.Text))
+                {
+                    var folder = new FolderItem(PathTextBox.Text);
+                    LoadSubFolders(folder);
+                    LoadFiles(folder);
+                }
+            }
+        }
+
+        private void Exit_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
+    }
+}

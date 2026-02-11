@@ -1,0 +1,209 @@
+<Window x:Class="FileManager.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:FileManager"
+        Title="File Manager" Height="600" Width="1000">
+
+    <DockPanel>
+
+        <!-- Меню -->
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="Файл">
+                <MenuItem Header="Выход" Click="Exit_Click"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- Поле пути -->
+        <TextBox x:Name="PathTextBox"
+                 DockPanel.Dock="Top"
+                 Height="30"
+                 Text="C:\"
+                 KeyDown="PathTextBox_KeyDown"/>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Дерево папок -->
+            <TreeView x:Name="FolderTree"
+                      SelectedItemChanged="FolderTree_SelectedItemChanged">
+
+                <TreeView.Resources>
+                    <HierarchicalDataTemplate DataType="{x:Type local:FolderItem}"
+                                              ItemsSource="{Binding SubFolders}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{Binding Icon}" Width="16" Height="16"/>
+                            <TextBlock Text="{Binding Name}" Margin="5,0,0,0"/>
+                        </StackPanel>
+                    </HierarchicalDataTemplate>
+                </TreeView.Resources>
+
+            </TreeView>
+
+            <!-- Список файлов -->
+            <ListView x:Name="FileList" Grid.Column="1">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="" Width="40">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Image Source="{Binding Icon}" Width="16" Height="16"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <GridViewColumn Header="Имя" DisplayMemberBinding="{Binding Name}" Width="200"/>
+                        <GridViewColumn Header="Тип" DisplayMemberBinding="{Binding Type}" Width="150"/>
+                        <GridViewColumn Header="Дата изменения" DisplayMemberBinding="{Binding Modified}" Width="200"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+
+        </Grid>
+    </DockPanel>
+</Window>
+
+
+
+
+
+
+
+
+using System;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Media.Imaging;
+
+namespace FileManager
+{
+    public partial class MainWindow : Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+            LoadDrives();
+        }
+
+        // ===== Класс папки =====
+        public class FolderItem
+        {
+            public string Path { get; set; }
+            public string Name { get; set; }
+            public ObservableCollection<FolderItem> SubFolders { get; set; }
+            public ObservableCollection<FileItem> Files { get; set; }
+            public BitmapImage Icon { get; set; }
+
+            public FolderItem(string path)
+            {
+                Path = path;
+                Name = System.IO.Path.GetFileName(path);
+                if (string.IsNullOrEmpty(Name))
+                    Name = path;
+
+                SubFolders = new ObservableCollection<FolderItem>();
+                Files = new ObservableCollection<FileItem>();
+                Icon = new BitmapImage(new Uri("pack://application:,,,/Icons/folder.png"));
+            }
+        }
+
+        // ===== Класс файла =====
+        public class FileItem
+        {
+            public string Name { get; set; }
+            public string Type { get; set; }
+            public DateTime Modified { get; set; }
+            public BitmapImage Icon { get; set; }
+        }
+
+        // ===== Загрузка дисков =====
+        private void LoadDrives()
+        {
+            foreach (var drive in DriveInfo.GetDrives())
+            {
+                if (drive.IsReady)
+                {
+                    var folder = new FolderItem(drive.Name);
+                    LoadSubFolders(folder);
+                    FolderTree.Items.Add(folder);
+                }
+            }
+        }
+
+        // ===== Загрузка подпапок =====
+        private void LoadSubFolders(FolderItem folder)
+        {
+            try
+            {
+                foreach (var dir in Directory.GetDirectories(folder.Path))
+                {
+                    folder.SubFolders.Add(new FolderItem(dir));
+                }
+            }
+            catch { }
+        }
+
+        // ===== При выборе папки =====
+        private void FolderTree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            if (FolderTree.SelectedItem is FolderItem folder)
+            {
+                PathTextBox.Text = folder.Path;
+                LoadFiles(folder);
+            }
+        }
+
+        // ===== Загрузка файлов =====
+        private void LoadFiles(FolderItem folder)
+        {
+            folder.Files.Clear();
+            FileList.Items.Clear();
+
+            try
+            {
+                foreach (var file in Directory.GetFiles(folder.Path))
+                {
+                    var info = new FileInfo(file);
+
+                    var fileItem = new FileItem
+                    {
+                        Name = info.Name,
+                        Type = info.Extension,
+                        Modified = info.LastWriteTime,
+                        Icon = GetFileIcon(info.Extension)
+                    };
+
+                    FileList.Items.Add(fileItem);
+                }
+            }
+            catch { }
+        }
+
+        // ===== Выбор иконки по типу =====
+        private BitmapImage GetFileIcon(string extension)
+        {
+            string iconPath = "Icons/file.png";
+
+            switch (extension.ToLower())
+            {
+                case ".txt":
+                    iconPath = "Icons/txt.png";
+                    break;
+                case ".png":
+                case ".jpg":
+                    iconPath = "Icons/image.png";
+                    break;
+                case ".exe":
+                    iconPath = "Icons/exe.png";
+                    break;
+            }
+
+            return new BitmapImage(new Uri($"pack://application:,,,/{iconPath}"));
+        }
+
+        // ===== Ввод пути вручную =====

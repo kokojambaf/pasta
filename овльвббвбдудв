@@ -1,0 +1,137 @@
+private void LoadDrives()
+{
+    foreach (var drive in DriveInfo.GetDrives())
+    {
+        if (drive.IsReady)
+        {
+            var folder = new FolderItem(drive.Name);
+            folder.SubFolders.Add(null); // заглушка
+            FolderTree.Items.Add(folder);
+        }
+    }
+}
+
+
+
+
+private void FolderTree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+{
+    if (FolderTree.SelectedItem is FolderItem folder)
+    {
+        PathTextBox.Text = folder.Path;
+        LoadFiles(folder.Path);
+    }
+}
+
+
+
+
+
+private void LoadFiles(string path)
+{
+    FileList.Items.Clear();
+
+    try
+    {
+        foreach (var file in Directory.GetFiles(path))
+        {
+            var info = new FileInfo(file);
+
+            var fileItem = new FileItem
+            {
+                Path = file,
+                Name = info.Name,
+                Type = info.Extension,
+                Modified = info.LastWriteTime,
+                Icon = GetFileIcon(info.Extension)
+            };
+
+            FileList.Items.Add(fileItem);
+        }
+    }
+    catch
+    {
+        MessageBox.Show("Нет доступа к папке");
+    }
+}
+
+
+
+
+
+
+
+
+private void PathTextBox_KeyDown(object sender, KeyEventArgs e)
+{
+    if (e.Key == Key.Enter)
+    {
+        if (Directory.Exists(PathTextBox.Text))
+        {
+            LoadFiles(PathTextBox.Text);
+        }
+        else
+        {
+            MessageBox.Show("Папка не существует");
+        }
+    }
+}
+
+
+
+
+
+
+private BitmapImage GetFileIcon(string extension)
+{
+    string iconPath = "Icons/file.png";
+
+    switch (extension.ToLower())
+    {
+        case ".txt":
+            iconPath = "Icons/txt.png";
+            break;
+        case ".png":
+        case ".jpg":
+            iconPath = "Icons/image.png";
+            break;
+        case ".exe":
+            iconPath = "Icons/exe.png";
+            break;
+    }
+
+    return new BitmapImage(new Uri($"pack://application:,,,/{iconPath}"));
+}
+
+
+
+
+<MenuItem Header="Архивировать папку"
+          Click="Zip_Click"/>
+
+
+
+
+private void Zip_Click(object sender, RoutedEventArgs e)
+{
+    if (FolderTree.SelectedItem is FolderItem folder)
+    {
+        try
+        {
+            string zipPath = folder.Path.TrimEnd('\\') + ".zip";
+
+            ZipFile.CreateFromDirectory(folder.Path, zipPath);
+
+            MessageBox.Show("Архив создан:\n" + zipPath);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Ошибка: " + ex.Message);
+        }
+    }
+    else
+    {
+        MessageBox.Show("Выберите папку для архивации");
+    }
+}
+

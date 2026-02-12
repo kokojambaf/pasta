@@ -1,0 +1,34 @@
+fun task55() {
+
+    val teacher1 = setOf(
+        "Иванов И.И.",
+        "Петров П.П.",
+        "Сидоров С.С.",
+        "Козлов А.А."
+    )
+
+    val teacher2 = setOf(
+        "Петров П.П.",
+        "Сидоров С.С.",
+        "Смирнов Д.Д.",
+        "Орлов В.В."
+    )
+
+    // 🔹 Все отправленные на пересдачу
+    val all = teacher1 union teacher2
+
+    // 🔹 Не сдали оба зачёта
+    val both = teacher1 intersect teacher2
+
+    // 🔹 Не сдали только один зачёт
+    val onlyOne = all subtract both
+
+    println("Всего на пересдаче: ${all.size}")
+    println(all)
+
+    println("\nНе сдали оба зачёта: ${both.size}")
+    println(both)
+
+    println("\nНе сдали только один зачёт: ${onlyOne.size}")
+    println(onlyOne)
+}

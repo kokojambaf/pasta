@@ -1,0 +1,37 @@
+fun task54() {
+
+    val figures = mutableMapOf(
+        "Треугольник" to 3,
+        "Четырёхугольник" to 4,
+        "Пятиугольник" to 5
+    )
+
+    // 🔹 Проверка ключа
+    print("Введите название фигуры: ")
+    val key = readln()
+
+    if (figures.containsKey(key)) {
+        println("Ключ найден. Значение: ${figures[key]}")
+    } else {
+        println("Такого ключа нет в словаре.")
+    }
+
+    // 🔹 Подсчёт совпадений значения
+    print("Введите количество сторон для поиска: ")
+    val value = readln().toInt()
+
+    val matches = figures.values.count { it == value }
+    println("Количество совпадений: $matches")
+
+    // 🔹 Удаление по ключу
+    print("Введите ключ для удаления: ")
+    val removeKey = readln()
+
+    if (figures.remove(removeKey) != null)
+        println("Элемент удалён.")
+    else
+        println("Ключ не найден.")
+
+    println("\nТекущее содержимое словаря:")
+    figures.forEach { (k, v) -> println("$k - $v") }
+}

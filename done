@@ -1,0 +1,252 @@
+using System;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+
+class Server
+{
+    static void Main()
+    {
+        TcpListener listener = new TcpListener(IPAddress.Any, 5000);
+        listener.Start();
+        Console.WriteLine("Сервер запущен...");
+
+        while (true)
+        {
+            TcpClient client = listener.AcceptTcpClient();
+            NetworkStream stream = client.GetStream();
+
+            byte[] buffer = new byte[1024];
+            int bytesRead = stream.Read(buffer, 0, buffer.Length);
+
+            string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
+            Console.WriteLine($"[{DateTime.Now}] Получено: {message}");
+
+            client.Close();
+        }
+    }
+}
+
+
+
+using System;
+using System.Net.Sockets;
+using System.Text;
+
+class Client
+{
+    static void Main()
+    {
+        TcpClient client = new TcpClient("127.0.0.1", 5000);
+        NetworkStream stream = client.GetStream();
+
+        Console.Write("Введите сообщение: ");
+        string message = Console.ReadLine();
+
+        byte[] data = Encoding.UTF8.GetBytes(message);
+        stream.Write(data, 0, data.Length);
+
+        client.Close();
+    }
+}
+
+
+
+using System;
+using System.IO;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+
+class Server
+{
+    static void Main()
+    {
+        TcpListener listener = new TcpListener(IPAddress.Any, 5000);
+        listener.Start();
+        Console.WriteLine("Сервер запущен...");
+
+        while (true)
+        {
+            TcpClient client = listener.AcceptTcpClient();
+            NetworkStream stream = client.GetStream();
+
+            byte[] buffer = new byte[1024];
+            int bytesRead = stream.Read(buffer, 0, buffer.Length);
+            string credentials = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
+            string[] parts = credentials.Split(':');
+            string login = parts[0];
+            string password = parts[1];
+
+            if (CheckUser(login, password))
+            {
+                byte[] success = Encoding.UTF8.GetBytes("OK");
+                stream.Write(success, 0, success.Length);
+
+                bytesRead = stream.Read(buffer, 0, buffer.Length);
+                string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
+                Console.WriteLine($"[{DateTime.Now}] {login}: {message}");
+            }
+            else
+            {
+                byte[] fail = Encoding.UTF8.GetBytes("FAIL");
+                stream.Write(fail, 0, fail.Length);
+            }
+
+            client.Close();
+        }
+    }
+
+    static bool CheckUser(string login, string password)
+    {
+        foreach (var line in File.ReadAllLines("users.txt"))
+        {
+            if (line == $"{login}:{password}")
+                return true;
+        }
+        return false;
+    }
+}
+
+
+
+using System;
+using System.Net.Sockets;
+using System.Text;
+
+class Client
+{
+    static void Main()
+    {
+        TcpClient client = new TcpClient("127.0.0.1", 5000);
+        NetworkStream stream = client.GetStream();
+
+        Console.Write("Логин: ");
+        string login = Console.ReadLine();
+
+        Console.Write("Пароль: ");
+        string password = Console.ReadLine();
+
+        string credentials = $"{login}:{password}";
+        byte[] data = Encoding.UTF8.GetBytes(credentials);
+        stream.Write(data, 0, data.Length);
+
+        byte[] buffer = new byte[1024];
+        int bytesRead = stream.Read(buffer, 0, buffer.Length);
+        string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
+        if (response == "OK")
+        {
+            Console.Write("Введите сообщение: ");
+            string message = Console.ReadLine();
+            byte[] messageData = Encoding.UTF8.GetBytes(message);
+            stream.Write(messageData, 0, messageData.Length);
+        }
+        else
+        {
+            Console.WriteLine("Ошибка авторизации!");
+        }
+
+        client.Close();
+    }
+}
+
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+
+class Server
+{
+    static List<TcpClient> clients = new List<TcpClient>();
+
+    static void Main()
+    {
+        TcpListener listener = new TcpListener(IPAddress.Any, 5000);
+        listener.Start();
+        Console.WriteLine("Сервер запущен...");
+
+        while (true)
+        {
+            TcpClient client = listener.AcceptTcpClient();
+            clients.Add(client);
+
+            Thread thread = new Thread(HandleClient);
+            thread.Start(client);
+        }
+    }
+
+    static void HandleClient(object obj)
+    {
+        TcpClient client = (TcpClient)obj;
+        NetworkStream stream = client.GetStream();
+        byte[] buffer = new byte[1024];
+
+        int bytesRead = stream.Read(buffer, 0, buffer.Length);
+        string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
+        Console.WriteLine($"[{DateTime.Now}] {message}");
+        Broadcast(message);
+
+        client.Close();
+    }
+
+    static void Broadcast(string message)
+    {
+        byte[] data = Encoding.UTF8.GetBytes(message);
+
+        foreach (var client in clients)
+        {
+            try
+            {
+                client.GetStream().Write(data, 0, data.Length);
+            }
+            catch { }
+        }
+    }
+}
+
+
+
+using System;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+
+class Client
+{
+    static void Main()
+    {
+        TcpClient client = new TcpClient("127.0.0.1", 5000);
+        NetworkStream stream = client.GetStream();
+
+        Thread receiveThread = new Thread(() =>
+        {
+            byte[] buffer = new byte[1024];
+            while (true)
+            {
+                int bytesRead = stream.Read(buffer, 0, buffer.Length);
+                string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                Console.WriteLine("Получено: " + message);
+            }
+        });
+        receiveThread.Start();
+
+        while (true)
+        {
+            string message = Console.ReadLine();
+            byte[] data = Encoding.UTF8.GetBytes(message);
+            stream.Write(data, 0, data.Length);
+        }
+    }
+}

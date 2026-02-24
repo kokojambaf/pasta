@@ -1,0 +1,118 @@
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+
+class Server
+{
+    static List<TcpClient> clients = new List<TcpClient>();
+    static object lockObj = new object();
+
+    static void Main()
+    {
+        TcpListener listener = new TcpListener(IPAddress.Any, 5000);
+        listener.Start();
+        Console.WriteLine("Сервер запущен...");
+
+        while (true)
+        {
+            TcpClient client = listener.AcceptTcpClient();
+            lock (lockObj)
+                clients.Add(client);
+
+            Thread thread = new Thread(HandleClient);
+            thread.Start(client);
+        }
+    }
+
+    static void HandleClient(object obj)
+    {
+        TcpClient client = (TcpClient)obj;
+        NetworkStream stream = client.GetStream();
+        byte[] buffer = new byte[1024];
+
+        try
+        {
+            while (true)
+            {
+                int bytesRead = stream.Read(buffer, 0, buffer.Length);
+                if (bytesRead == 0) break;
+
+                string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                Console.WriteLine($"[{DateTime.Now}] {message}");
+
+                Broadcast(message, client);
+            }
+        }
+        catch { }
+
+        lock (lockObj)
+            clients.Remove(client);
+
+        client.Close();
+    }
+
+    static void Broadcast(string message, TcpClient sender)
+    {
+        byte[] data = Encoding.UTF8.GetBytes(message);
+
+        lock (lockObj)
+        {
+            foreach (var client in clients)
+            {
+                if (client != sender) // 🔥 не отправляем обратно отправителю
+                {
+                    try
+                    {
+                        client.GetStream().Write(data, 0, data.Length);
+                    }
+                    catch { }
+                }
+            }
+        }
+    }
+}
+
+
+
+
+using System;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+
+class Client
+{
+    static void Main()
+    {
+        TcpClient client = new TcpClient("127.0.0.1", 5000);
+        NetworkStream stream = client.GetStream();
+
+        // Поток получения
+        Thread receiveThread = new Thread(() =>
+        {
+            byte[] buffer = new byte[1024];
+
+            while (true)
+            {
+                int bytesRead = stream.Read(buffer, 0, buffer.Length);
+                if (bytesRead == 0) break;
+
+                string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                Console.WriteLine("Получено: " + message);
+            }
+        });
+
+        receiveThread.Start();
+
+        // Отправка сообщений
+        while (true)
+        {
+            string message = Console.ReadLine();
+            byte[] data = Encoding.UTF8.GetBytes(message);
+            stream.Write(data, 0, data.Length);
+        }
+    }
+}

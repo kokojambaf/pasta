@@ -1,0 +1,87 @@
+@Composable
+fun Task3Box() {
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+
+        // ===== ВЕРХ =====
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .fillMaxWidth(0.33f)
+                .height(60.dp)
+                .background(Color.Red)
+        )
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth(0.34f)
+                .height(60.dp)
+                .background(Color(0xFF2196F3)) // синий
+        )
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .fillMaxWidth(0.33f)
+                .height(60.dp)
+                .background(Color(0xFFFF9800)) // оранжевый
+        )
+
+        // ===== ЛЕВО =====
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .width(60.dp)
+                .fillMaxHeight(0.4f)
+                .background(Color.Green)
+        )
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .width(60.dp)
+                .fillMaxHeight(0.3f)
+                .background(Color.Blue)
+        )
+
+        // ===== ПРАВО =====
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .width(60.dp)
+                .fillMaxHeight(0.4f)
+                .background(Color(0xFFE91E63)) // розовый
+        )
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .width(60.dp)
+                .fillMaxHeight(0.3f)
+                .background(Color.Yellow)
+        )
+
+        // ===== НИЗ =====
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth(0.34f)
+                .height(60.dp)
+                .background(Color.Gray)
+        )
+
+        // ===== ЦЕНТР (перекрывает рамку) =====
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .width(220.dp)
+                .height(400.dp)
+                .background(Color.Black)
+        )
+    }
+}

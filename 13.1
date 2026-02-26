@@ -1,0 +1,121 @@
+@Composable
+fun Task3Box() {
+
+    val side = 70.dp
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+
+        // ===== ВЕРХ =====
+        Box(
+            Modifier
+                .align(Alignment.TopStart)
+                .fillMaxWidth(0.33f)
+                .height(side)
+                .background(Color.Red)
+        )
+
+        Box(
+            Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth(0.34f)
+                .height(side)
+                .background(Color(0xFF2196F3))
+        )
+
+        Box(
+            Modifier
+                .align(Alignment.TopEnd)
+                .fillMaxWidth(0.33f)
+                .height(side)
+                .background(Color(0xFFFF9800))
+        )
+
+        // ===== ЛЕВАЯ СТОРОНА =====
+        Box(
+            Modifier
+                .align(Alignment.TopStart)
+                .width(side)
+                .fillMaxHeight(0.4f)
+                .background(Color.Red)
+        )
+
+        Box(
+            Modifier
+                .align(Alignment.CenterStart)
+                .width(side)
+                .fillMaxHeight(0.3f)
+                .background(Color.Green)
+        )
+
+        Box(
+            Modifier
+                .align(Alignment.BottomStart)
+                .width(side)
+                .fillMaxHeight(0.3f)
+                .background(Color.Blue)
+        )
+
+        // ===== ПРАВАЯ СТОРОНА =====
+        Box(
+            Modifier
+                .align(Alignment.TopEnd)
+                .width(side)
+                .fillMaxHeight(0.4f)
+                .background(Color(0xFFFF9800))
+        )
+
+        Box(
+            Modifier
+                .align(Alignment.CenterEnd)
+                .width(side)
+                .fillMaxHeight(0.3f)
+                .background(Color(0xFFE91E63))
+        )
+
+        Box(
+            Modifier
+                .align(Alignment.BottomEnd)
+                .width(side)
+                .fillMaxHeight(0.3f)
+                .background(Color.Yellow)
+        )
+
+        // ===== НИЗ =====
+        Box(
+            Modifier
+                .align(Alignment.BottomStart)
+                .fillMaxWidth(0.33f)
+                .height(side)
+                .background(Color.Blue)
+        )
+
+        Box(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth(0.34f)
+                .height(side)
+                .background(Color.Gray)
+        )
+
+        Box(
+            Modifier
+                .align(Alignment.BottomEnd)
+                .fillMaxWidth(0.33f)
+                .height(side)
+                .background(Color.Yellow)
+        )
+
+        // ===== ЧЕРНЫЙ ЦЕНТР =====
+        Box(
+            Modifier
+                .align(Alignment.Center)
+                .width(220.dp)
+                .height(420.dp)
+                .background(Color.Black)
+        )
+    }
+}

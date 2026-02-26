@@ -1,0 +1,90 @@
+@Composable
+fun Task3Box() {
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+
+        val side = 60.dp
+
+        // ===== УГЛЫ =====
+        Box(
+            Modifier
+                .size(side)
+                .align(Alignment.TopStart)
+                .background(Color.Red)
+        )
+
+        Box(
+            Modifier
+                .size(side)
+                .align(Alignment.TopEnd)
+                .background(Color(0xFFFF9800)) // оранжевый
+        )
+
+        Box(
+            Modifier
+                .size(side)
+                .align(Alignment.BottomStart)
+                .background(Color.Blue)
+        )
+
+        Box(
+            Modifier
+                .size(side)
+                .align(Alignment.BottomEnd)
+                .background(Color.Yellow)
+        )
+
+        // ===== ВЕРХ (центр) =====
+        Box(
+            Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .height(side)
+                .padding(start = side, end = side)
+                .background(Color(0xFF2196F3)) // голубой
+        )
+
+        // ===== НИЗ (центр) =====
+        Box(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(side)
+                .padding(start = side, end = side)
+                .background(Color.Gray)
+        )
+
+        // ===== ЛЕВО (центр) =====
+        Box(
+            Modifier
+                .align(Alignment.CenterStart)
+                .width(side)
+                .fillMaxHeight()
+                .padding(top = side, bottom = side)
+                .background(Color.Green)
+        )
+
+        // ===== ПРАВО (центр) =====
+        Box(
+            Modifier
+                .align(Alignment.CenterEnd)
+                .width(side)
+                .fillMaxHeight()
+                .padding(top = side, bottom = side)
+                .background(Color(0xFFE91E63)) // розовый
+        )
+
+        // ===== ЧЁРНЫЙ ЦЕНТР =====
+        Box(
+            Modifier
+                .align(Alignment.Center)
+                .width(220.dp)
+                .height(400.dp)
+                .background(Color.Black)
+        )
+    }
+}

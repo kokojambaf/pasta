@@ -1,0 +1,53 @@
+import re
+
+def split_into_sentences(text: str):
+    parts = re.split(r'(?:\.\.\.|[.!?])\s*', text)
+    return [p for p in parts if p.strip()]
+
+def censor_bad_words(text: str):
+    pattern = r'\b(?:редиск\w*|нехорош\w*\s+человек\w*)\b'
+    return re.sub(pattern, '*давайте жить дружно*', text, flags=re.IGNORECASE)
+
+def find_dates(text: str):
+    day = r'(?:0?[1-9]|[12]\d|3[01])'
+    month = r'(?:0?[1-9]|1[0-2])'
+    year = r'(?:\d{2}|\d{4})'
+    pattern = rf'\b{day}\.{month}\.{year}\b'
+    return re.findall(pattern, text)
+
+def is_strong_password(password: str) -> bool:
+    return bool(
+        re.search(r'.{6,}', password)
+        and re.search(r'[0-9]', password)
+        and re.search(r'[a-z]', password)
+        and re.search(r'[A-Z]', password)
+    )
+
+if __name__ == "__main__":
+    #1
+    text1 = input("5.1 Введите строку для разбиения на предложения:\n")
+    sentences = split_into_sentences(text1)
+    print("\nПредложения:")
+    for s in sentences:
+        print(s)
+
+    #2
+    text2 = input("\n5.2 Введите строку для замены слов/фраз:\n")
+    replaced = censor_bad_words(text2)
+    print("Результат замены:")
+    print(replaced)
+
+    #3
+    text3 = input("\n5.3 Введите строку для поиска дат:\n")
+    dates = find_dates(text3)
+    print("Найденные даты:")
+    for d in dates:
+        print(d)
+
+    #4
+    while True:
+        pwd = input("\n5.4 Введите пароль: ")
+        if is_strong_password(pwd):
+            print("Пароль надежный.")
+            break
+        print("Пароль ненадежный. Повторите ввод.")

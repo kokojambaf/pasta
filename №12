@@ -1,0 +1,247 @@
+import os
+
+
+#1
+def task_5_1():
+    try:
+        path = input("Введите имя файла: ").strip()
+        if not path:
+            print("Имя файла не введено.")
+            return
+
+        if not os.path.exists(path):
+            print("Файл не существует.")
+            return
+
+        if not os.path.isfile(path):
+            print("Указанный путь не является файлом.")
+            return
+
+        with open(path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        print("\nСодержимое файла:")
+        print(content)
+
+        _, ext = os.path.splitext(path)
+        if ext.lower() == ".py":
+            print("\nВыполнение скрипта из файла:")
+            try:
+                exec(content, {})
+            except Exception as e:
+                print(f"Ошибка при выполнении скрипта: {e}")
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+
+#2
+def task_5_2():
+    try:
+        path = input("Введите имя файла для записи: ").strip()
+        if not path:
+            print("Имя файла не введено.")
+            return
+
+        parent = os.path.dirname(path)
+        if parent and not os.path.exists(parent):
+            print("Папка для файла не существует.")
+            return
+
+        mode = "a"
+        if os.path.exists(path):
+            choice = input("Файл существует. Дописать (a) или перезаписать (w)? ").strip().lower()
+            if choice not in ("a", "w"):
+                print("Некорректный выбор.")
+                return
+            mode = choice
+
+        with open(path, mode, encoding="utf-8") as f:
+            print("Введите текст построчно. Для завершения введите: end")
+            while True:
+                line = input()
+                if line == "end":
+                    break
+                f.write(line + "\n")
+
+        print("Запись завершена.")
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+
+#3
+def task_5_3():
+    try:
+        path = input("Введите имя исходного файла: ").strip()
+        if not path:
+            print("Имя файла не введено.")
+            return
+
+        if not os.path.exists(path):
+            print("Файл не существует.")
+            return
+
+        if not os.path.isfile(path):
+            print("Указанный путь не является файлом.")
+            return
+
+        print("Выберите операцию:")
+        print("1 - вывести содержимое")
+        print("2 - удалить файл")
+        print("3 - переименовать файл")
+        op = input("Ваш выбор: ").strip()
+
+        if op == "1":
+            with open(path, "r", encoding="utf-8") as f:
+                print("\nСодержимое файла:")
+                print(f.read())
+
+        elif op == "2":
+            os.remove(path)
+            print("Файл удален.")
+
+        elif op == "3":
+            new_name = input("Введите новое имя файла: ").strip()
+            if not new_name:
+                print("Новое имя не введено.")
+                return
+
+            parent = os.path.dirname(new_name)
+            if parent and not os.path.exists(parent):
+                print("Папка для нового имени не существует.")
+                return
+
+            if os.path.exists(new_name):
+                print("Файл с таким именем уже существует.")
+                return
+
+            os.rename(path, new_name)
+            print("Файл переименован.")
+
+        else:
+            print("Некорректная операция.")
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+
+#4
+def task_5_4():
+    try:
+        path = input("Введите имя текстового файла: ").strip()
+        if not path:
+            print("Имя файла не введено.")
+            return
+
+        if not os.path.exists(path):
+            print("Файл не существует.")
+            return
+
+        if not os.path.isfile(path):
+            print("Указанный путь не является файлом.")
+            return
+
+        with open(path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        if not lines:
+            print("Файл пуст.")
+            return
+
+        print("\nПервая строка:")
+        print(lines[0].rstrip("\n"))
+
+        print("\nПятая строка:")
+        if len(lines) >= 5:
+            print(lines[4].rstrip("\n"))
+        else:
+            print("Пятой строки нет.")
+
+        print("\nПервые 5 строк:")
+        for line in lines[:5]:
+            print(line.rstrip("\n"))
+
+        try:
+            s1 = int(input("\nВведите s1: "))
+            s2 = int(input("Введите s2: "))
+            if s1 < 1 or s2 < 1 or s1 > s2:
+                print("Некорректные границы.")
+            else:
+                print(f"\nСтроки с {s1}-й по {s2}-ю:")
+                for line in lines[s1 - 1:s2]:
+                    print(line.rstrip("\n"))
+        except ValueError:
+            print("s1 и s2 должны быть целыми числами.")
+
+        print("\nВесь файл:")
+        for line in lines:
+            print(line.rstrip("\n"))
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+
+#5
+def task_5_5():
+    try:
+        path = input("Введите имя файла с числами: ").strip()
+        if not path:
+            print("Имя файла не введено.")
+            return
+
+        if not os.path.exists(path):
+            print("Файл не существует.")
+            return
+
+        if not os.path.isfile(path):
+            print("Указанный путь не является файлом.")
+            return
+
+        with open(path, "r", encoding="utf-8") as f:
+            for i, line in enumerate(f, start=1):
+                line = line.strip()
+                if not line:
+                    print(f"Строка {i}: 0")
+                    continue
+
+                try:
+                    nums = list(map(int, line.split()))
+                    print(f"Строка {i}: {sum(nums)}")
+                except ValueError:
+                    print(f"Строка {i}: содержит нецелые значения.")
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+
+def main():
+    while True:
+        print("\nВыберите задание:")
+        print("1 - 5.1")
+        print("2 - 5.2")
+        print("3 - 5.3")
+        print("4 - 5.4")
+        print("5 - 5.5")
+        print("0 - выход")
+        choice = input("Ваш выбор: ").strip()
+
+        if choice == "1":
+            task_5_1()
+        elif choice == "2":
+            task_5_2()
+        elif choice == "3":
+            task_5_3()
+        elif choice == "4":
+            task_5_4()
+        elif choice == "5":
+            task_5_5()
+        elif choice == "0":
+            print("Выход.")
+            break
+        else:
+            print("Некорректный выбор.")
+
+
+if __name__ == "__main__":
+    main()

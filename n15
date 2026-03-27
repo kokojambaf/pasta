@@ -1,0 +1,87 @@
+import tkinter as tk
+from tkinter import filedialog
+
+# 5.1
+def task1():
+    root = tk.Tk()
+    root.title("5.1")
+    root.geometry("300x300")
+
+    text = tk.Text(root)
+    text.pack(expand=True, fill="both")
+
+    def save_file(event=None):
+        file = filedialog.asksaveasfilename(defaultextension=".txt")
+        if file:
+            with open(file, "w", encoding="utf-8") as f:
+                f.write(text.get("1.0", tk.END))
+
+    btn = tk.Button(root, text="Сохранить", command=save_file)
+    btn.pack()
+
+    root.bind("<Control-s>", save_file)
+    root.bind("<Escape>", lambda e: root.destroy())
+
+    root.mainloop()
+
+# 5.2
+def task2():
+    root = tk.Tk()
+    root.title("5.2")
+
+    label = tk.Label(root, text="")
+    label.pack()
+
+    e1 = tk.Entry(root, name="Поле 1")
+    e2 = tk.Entry(root, name="Поле 2")
+    e3 = tk.Entry(root, name="Поле 3")
+
+    e1.pack()
+    e2.pack()
+    e3.pack()
+
+    def left_click(event):
+        label.config(text=event.widget.winfo_name())
+
+    def right_click(event):
+        print(event.widget.winfo_name())
+
+    root.bind_class("Entry", "<Button-1>", left_click)
+    root.bind_class("Entry", "<Button-3>", right_click)
+
+    root.mainloop()
+
+# 5.3
+def task3():
+    root = tk.Tk()
+    root.title("5.3")
+
+    label = tk.Label(root, text="Координаты мыши")
+    label.pack()
+
+    def motion(event):
+        label.config(text=f"{event.x}, {event.y}")
+
+    root.bind("<Motion>", motion)
+
+    root.mainloop()
+
+# 5.4
+def task4():
+    root = tk.Tk()
+    root.title("5.4")
+
+    label = tk.Label(root, text="Нажатые клавиши")
+    label.pack()
+
+    def key(event):
+        label.config(text=label.cget("text") + event.char)
+
+    root.bind("<Key>", key)
+
+    root.mainloop()
+
+task1()
+task2()
+task3()
+task4()

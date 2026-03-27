@@ -1,0 +1,140 @@
+import json
+import os
+
+# ---------- 5.1 Фрукты ----------
+def create_fruits_file():
+    fruits = {
+        "apple": 1.2,
+        "banana": 0.8,
+        "orange": 1.5
+    }
+
+    with open("fruits.json", "w", encoding="utf-8") as f:
+        json.dump(fruits, f, indent=4, ensure_ascii=False)
+
+    print("Файл fruits.json создан!")
+
+
+# ---------- 5.2 Класс Кот ----------
+class Cat:
+    def __init__(self, name, age, color):
+        self.name = name
+        self.age = age
+        self.color = color
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "age": self.age,
+            "color": self.color
+        }
+
+
+FILE_NAME = "cats.json"
+
+
+def load_cats():
+    if not os.path.exists(FILE_NAME):
+        return []
+
+    with open(FILE_NAME, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_cats(cats):
+    with open(FILE_NAME, "w", encoding="utf-8") as f:
+        json.dump(cats, f, indent=4, ensure_ascii=False)
+
+
+def add_cat():
+    name = input("Имя: ")
+    age = int(input("Возраст: "))
+    color = input("Окрас: ")
+
+    cat = Cat(name, age, color)
+
+    cats = load_cats()
+    cats.append(cat.to_dict())
+    save_cats(cats)
+
+    print("Кот добавлен!")
+
+
+def show_cats():
+    cats = load_cats()
+
+    if not cats:
+        print("Список пуст")
+        return
+
+    for cat in cats:
+        print(f"{cat['name']} | {cat['age']} лет | {cat['color']}")
+
+
+def delete_cat():
+    name = input("Введите имя кота для удаления: ")
+
+    cats = load_cats()
+    new_cats = [cat for cat in cats if cat["name"] != name]
+
+    if len(cats) == len(new_cats):
+        print("Кот не найден")
+    else:
+        save_cats(new_cats)
+        print("Кот удалён!")
+
+
+# ---------- 5.3 Сортировка ----------
+def sort_cats():
+    cats = load_cats()
+
+    if not cats:
+        print("Нет данных")
+        return
+
+    print("1 - по имени")
+    print("2 - по возрасту")
+    choice = input("Выбор: ")
+
+    if choice == "1":
+        cats.sort(key=lambda x: x["name"])
+    elif choice == "2":
+        cats.sort(key=lambda x: x["age"])
+    else:
+        print("Неверный выбор")
+        return
+
+    for cat in cats:
+        print(f"{cat['name']} | {cat['age']} лет | {cat['color']}")
+
+
+# ---------- Меню ----------
+def main():
+    while True:
+        print("\n1. Создать файл фруктов")
+        print("2. Добавить кота")
+        print("3. Показать котов")
+        print("4. Удалить кота")
+        print("5. Сортировать котов")
+        print("0. Выход")
+
+        choice = input("Выберите действие: ")
+
+        if choice == "1":
+            create_fruits_file()
+        elif choice == "2":
+            add_cat()
+        elif choice == "3":
+            show_cats()
+        elif choice == "4":
+            delete_cat()
+        elif choice == "5":
+            sort_cats()
+        elif choice == "0":
+            break
+        else:
+            print("Ошибка ввода")
+
+
+if name == "__main__":
+    main()

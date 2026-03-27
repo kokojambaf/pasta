@@ -1,0 +1,112 @@
+import tkinter as tk
+
+# 5.1
+def task1():
+    root = tk.Tk()
+    root.title("Форма авторизации")
+    root.geometry("200x300")
+
+    tk.Label(root, text="Логин").pack()
+    tk.Entry(root).pack()
+
+    tk.Label(root, text="Пароль").pack()
+    tk.Entry(root, show="*").pack()
+
+    tk.Checkbutton(root, text="Запомнить пароль").pack()
+    tk.Button(root, text="Авторизоваться").pack(pady=10)
+
+    root.mainloop()
+
+# 5.2
+def task2():
+    root = tk.Tk()
+    root.title("Форма регистрации")
+    root.geometry("300x400")
+    root.configure(bg="lightblue")
+
+    tk.Label(root, text="Логин", bg="lightblue").pack()
+    tk.Entry(root).pack()
+
+    tk.Label(root, text="Пароль", bg="lightblue").pack()
+    tk.Entry(root, show="*").pack()
+
+    tk.Label(root, text="О себе", bg="lightblue").pack()
+    tk.Text(root, height=4).pack()
+
+    gender = tk.StringVar(value="М")
+    tk.Radiobutton(root, text="Мужской", variable=gender, value="М", bg="lightblue").pack()
+    tk.Radiobutton(root, text="Женский", variable=gender, value="Ж", bg="lightblue").pack()
+
+    listbox = tk.Listbox(root)
+    for item in ["Музыка", "Спорт", "Игры", "Книги", "Путешествия"]:
+        listbox.insert(tk.END, item)
+    listbox.pack()
+
+    tk.Button(root, text="Зарегистрироваться").pack(pady=10)
+
+    root.mainloop()
+
+# 5.3
+def task3():
+    root = tk.Tk()
+    root.title("Переменные")
+
+    name = tk.StringVar()
+    check = tk.IntVar()
+    gender = tk.StringVar(value="М")
+
+    def show():
+        label.config(text=f"{name.get()}, {check.get()}, {gender.get()}")
+
+    tk.Entry(root, textvariable=name).pack()
+    tk.Checkbutton(root, text="Флажок", variable=check).pack()
+    tk.Radiobutton(root, text="М", variable=gender, value="М").pack()
+    tk.Radiobutton(root, text="Ж", variable=gender, value="Ж").pack()
+    tk.Button(root, text="Показать", command=show).pack()
+
+    label = tk.Label(root)
+    label.pack()
+
+    root.mainloop()
+
+# 5.4
+def task4():
+    root = tk.Tk()
+    root.title("Меню")
+    root.geometry("300x300")
+
+    frame = tk.Frame(root, width=200, height=200, bg="white")
+    frame.pack(pady=20)
+
+    def color(c):
+        frame.config(bg=c)
+
+    def size(s):
+        root.geometry(s)
+
+    menu = tk.Menu(root)
+    root.config(menu=menu)
+
+    m1 = tk.Menu(menu, tearoff=0)
+    menu.add_cascade(label="Color", menu=m1)
+    m1.add_command(label="Red", command=lambda: color("red"), accelerator="Ctrl+R")
+    m1.add_command(label="Green", command=lambda: color("green"), accelerator="Ctrl+G")
+    m1.add_command(label="Blue", command=lambda: color("blue"), accelerator="Ctrl+B")
+
+    m2 = tk.Menu(menu, tearoff=0)
+    menu.add_cascade(label="Size", menu=m2)
+    m2.add_command(label="500x500", command=lambda: size("500x500"), accelerator="Ctrl+1")
+    m2.add_command(label="700x400", command=lambda: size("700x400"), accelerator="Ctrl+2")
+
+    root.bind("<Control-r>", lambda e: color("red"))
+    root.bind("<Control-g>", lambda e: color("green"))
+    root.bind("<Control-b>", lambda e: color("blue"))
+    root.bind("<Control-1>", lambda e: size("500x500"))
+    root.bind("<Control-2>", lambda e: size("700x400"))
+
+    root.mainloop()
+
+task1()
+task2()
+task3()
+task4()

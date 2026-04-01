@@ -1,0 +1,152 @@
+#1
+Сохрани как FileSystemLib.cs (в Class Library проекте .NET), собери в FileSystemLib.dll.
+
+using System;
+using System.IO;
+
+namespace FileSystemLib
+{
+    public class FileSystemService
+    {
+        public void CreateFile(string path, string content)
+        {
+            File.WriteAllText(path, content);
+        }
+
+        public string ReadFile(string path)
+        {
+            return File.ReadAllText(path);
+        }
+
+        public void UpdateFile(string path, string newContent)
+        {
+            File.WriteAllText(path, newContent);
+        }
+
+        public void DeleteFile(string path)
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+    }
+}
+
+
+
+# pip install pythonnet
+import os
+import clr
+
+# Путь к собранной DLL
+DLL_PATH = r"C:\path\to\FileSystemLib.dll"  # поменяй на свой
+
+clr.AddReference(DLL_PATH)
+
+from FileSystemLib import FileSystemService
+
+def test_filesystem_interaction():
+    service = FileSystemService()
+
+    test_file = "test_from_python_and_csharp.txt"
+
+    # CREATE
+    print("CREATE...")
+    service.CreateFile(test_file, "Hello from C# called by Python")
+    print("Exists after create:", os.path.exists(test_file))
+
+    # READ
+    print("READ...")
+    content = service.ReadFile(test_file)
+    print("Content:", content)
+
+    # UPDATE
+    print("UPDATE...")
+    service.UpdateFile(test_file, "Updated text")
+    updated = service.ReadFile(test_file)
+    print("Updated content:", updated)
+
+    # DELETE
+    print("DELETE...")
+    service.DeleteFile(test_file)
+    print("Exists after delete:", os.path.exists(test_file))
+
+if __name__ == "__main__":
+    test_filesystem_interaction()
+
+
+
+#2
+// 5.2 Подключение внешнего IronPython-скрипта в C#
+// NuGet: IronPython, DynamicLanguageRuntime
+// Файлы:
+// 1) Program.cs (этот код)
+// 2) process_numbers.py (скрипт ниже)
+
+using System;
+using System.Collections.Generic;
+using IronPython.Hosting;
+using Microsoft.Scripting.Hosting;
+
+class Program
+{
+    static void Main()
+    {
+        // Данные из C#
+        var numbers = new List<int> { 1, 2, 3, 4, 5 };
+
+        // Создаем движок IronPython
+        ScriptEngine engine = Python.CreateEngine();
+        ScriptScope scope = engine.CreateScope();
+
+        // Передаем данные в скрипт
+        scope.SetVariable("input_data", numbers);
+
+        // Выполняем внешний .py файл
+        // Укажи свой путь, если файл лежит не рядом с exe:
+        // engine.ExecuteFile(@"C:\path\to\process_numbers.py", scope);
+        engine.ExecuteFile("process_numbers.py", scope);
+
+        // Забираем output из Python
+        dynamic output = scope.GetVariable("output");
+
+        // Чтение результатов
+        var squared = output["squared"];
+        int sum = output["sum"];
+        int count = output["count"];
+
+        Console.WriteLine("Результат из Python:");
+        Console.Write("squared: ");
+        foreach (var n in squared)
+            Console.Write(n + " ");
+        Console.WriteLine();
+
+        Console.WriteLine($"sum: {sum}");
+        Console.WriteLine($"count: {count}");
+    }
+}
+
+
+
+# process_numbers.py
+# Получаем данные из C#
+numbers = input_data
+
+# Обработка на Python
+squared = [x * x for x in numbers]
+total = sum(numbers)
+
+# Результат для C#
+output = {
+    "squared": squared,
+    "sum": total,
+    "count": len(numbers)
+}
+
+
+Коротко по запуску:
+
+Установи NuGet-пакеты: IronPython и DynamicLanguageRuntime.
+Положи process_numbers.py рядом с .exe (или укажи полный путь в ExecuteFile).
+Запусти Program.cs — получишь squared, sum, count из Python-скрипта.

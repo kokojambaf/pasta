@@ -1,0 +1,264 @@
+# 5.1 Диспетчер задач (консольный, Windows, без сторонних библиотек)
+# Функции:
+# 1) Показать список процессов
+# 2) Запустить программу
+# 3) Завершить процесс по PID
+
+import subprocess
+
+def show_processes():
+    # /fo table — табличный вывод, /nh — без заголовка
+    result = subprocess.run(["tasklist", "/fo", "table", "/nh"], capture_output=True, text=True, encoding="cp866")
+    print("\nСписок запущенных процессов:\n")
+    print(result.stdout)
+
+def start_program():
+    path = input("Введите команду/путь для запуска (например notepad): ").strip()
+    if not path:
+        print("Пустая команда.")
+        return
+    try:
+        p = subprocess.Popen(path, shell=True)
+        print(f"Запущено. PID: {p.pid}")
+    except Exception as e:
+        print("Ошибка запуска:", e)
+
+def kill_process():
+    pid = input("Введите PID для завершения: ").strip()
+    if not pid.isdigit():
+        print("PID должен быть числом.")
+        return
+    # /F — принудительно
+    result = subprocess.run(["taskkill", "/PID", pid, "/F"], capture_output=True, text=True, encoding="cp866")
+    print(result.stdout if result.stdout else result.stderr)
+
+def main():
+    while True:
+        print("\n=== Мини-диспетчер задач ===")
+        print("1 - Показать процессы")
+        print("2 - Запустить программу")
+        print("3 - Завершить процесс")
+        print("0 - Выход")
+        choice = input("Выбор: ").strip()
+
+        if choice == "1":
+            show_processes()
+        elif choice == "2":
+            start_program()
+        elif choice == "3":
+            kill_process()
+        elif choice == "0":
+            print("Выход.")
+            break
+        else:
+            print("Неверный выбор.")
+
+if __name__ == "__main__":
+    main()
+
+
+
+# 5.2 Два потока: числа 0..9 и буквы A..J, задержка 2 секунды
+
+import threading
+import time
+
+def print_numbers():
+    for i in range(10):
+        print(f"Число: {i}")
+        time.sleep(2)
+
+def print_letters():
+    for code in range(ord('A'), ord('J') + 1):
+        print(f"Буква: {chr(code)}")
+        time.sleep(2)
+
+t1 = threading.Thread(target=print_numbers)
+t2 = threading.Thread(target=print_letters)
+
+t1.start()
+t2.start()
+
+t1.join()
+t2.join()
+
+print("Оба потока завершены.")
+
+
+
+# 5.3 Глобальная переменная counter, 10 потоков:
+# Сначала без синхронизации, затем с lock
+
+import threading
+import time
+
+counter = 0
+
+def worker_no_lock(name):
+    global counter
+    for _ in range(11):  # от 0 до 10
+        old = counter
+        time.sleep(0.001)  # специально, чтобы легче поймать гонку
+        counter = old + 1
+        print(f"[без lock] {name} -> counter={counter}")
+    counter = 0
+    print(f"[без lock] {name} сбросил counter=0")
+
+def run_without_lock():
+    global counter
+    counter = 0
+    threads = []
+    for i in range(10):
+        t = threading.Thread(target=worker_no_lock, args=(f"T{i+1}",))
+        threads.append(t)
+        t.start()
+    for t in threads:
+        t.join()
+    print("Итог без lock:", counter)
+
+lock = threading.Lock()
+
+def worker_with_lock(name):
+    global counter
+    for _ in range(11):
+        with lock:
+            counter += 1
+            print(f"[с lock] {name} -> counter={counter}")
+        time.sleep(0.001)
+    with lock:
+        counter = 0
+        print(f"[с lock] {name} сбросил counter=0")
+
+def run_with_lock():
+    global counter
+    counter = 0
+    threads = []
+    for i in range(10):
+        t = threading.Thread(target=worker_with_lock, args=(f"T{i+1}",))
+        threads.append(t)
+        t.start()
+    for t in threads:
+        t.join()
+    print("Итог с lock:", counter)
+
+if __name__ == "__main__":
+    print("=== Без синхронизации ===")
+    run_without_lock()
+    print("\n=== С lock ===")
+    run_with_lock()
+    print("\nПочему без lock некорректно: есть race condition (гонка потоков), "
+          "операция counter += 1 не атомарна.")
+
+
+
+
+# 5.4 То же, но с использованием семафора вместо lock
+
+import threading
+import time
+
+counter = 0
+semaphore = threading.Semaphore(1)  # бинарный семафор = как lock
+
+def worker_with_semaphore(name):
+    global counter
+    for _ in range(11):
+        semaphore.acquire()
+        try:
+            counter += 1
+            print(f"[semaphore] {name} -> counter={counter}")
+        finally:
+            semaphore.release()
+        time.sleep(0.001)
+
+    semaphore.acquire()
+    try:
+        counter = 0
+        print(f"[semaphore] {name} сбросил counter=0")
+    finally:
+        semaphore.release()
+
+threads = []
+for i in range(10):
+    t = threading.Thread(target=worker_with_semaphore, args=(f"T{i+1}",))
+    threads.append(t)
+    t.start()
+
+for t in threads:
+    t.join()
+
+print("Готово.")
+
+
+
+
+# 5.5 Сервер на 3 одновременных запроса, 10 пользователей
+
+import threading
+import time
+import random
+
+semaphore = threading.Semaphore(3)
+
+def request_handler(user_id):
+    print(f"Пользователь {user_id} ждет доступа")
+    with semaphore:
+        print(f"Пользователь {user_id} подключился к серверу")
+        time.sleep(random.randint(1, 3))
+        print(f"Пользователь {user_id} отключился")
+
+threads = []
+for user_id in range(1, 11):
+    t = threading.Thread(target=request_handler, args=(user_id,))
+    threads.append(t)
+    t.start()
+
+for t in threads:
+    t.join()
+
+print("Все пользователи обработаны.")
+
+
+
+# 5.6 Обмен сообщениями между потоками через Event
+# Сценарий: producer "создает" сообщение, consumer ждет сигнал Event и читает.
+
+import threading
+import time
+
+event = threading.Event()
+message = None
+stop = False
+
+def producer():
+    global message, stop
+    for i in range(1, 6):
+        time.sleep(1)
+        message = f"Сообщение #{i}"
+        print(f"[Producer] отправил: {message}")
+        event.set()  # сигнал consumer, что есть данные
+        while event.is_set():
+            time.sleep(0.01)  # ждем, пока consumer обработает
+    stop = True
+    event.set()  # разбудить consumer для завершения
+
+def consumer():
+    global stop
+    while True:
+        event.wait()  # ждем сигнал
+        if stop:
+            break
+        print(f"[Consumer] получил: {message}")
+        event.clear()  # подтверждаем обработку
+    print("[Consumer] завершен")
+
+t1 = threading.Thread(target=producer)
+t2 = threading.Thread(target=consumer)
+
+t1.start()
+t2.start()
+
+t1.join()
+t2.join()
+
+print("Обмен сообщениями завершен.")

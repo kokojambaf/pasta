@@ -1,0 +1,116 @@
+USE `Markets`;
+
+-- 1
+DROP PROCEDURE IF EXISTS add_customer;
+DELIMITER $$
+
+CREATE PROCEDURE add_customer(
+    IN p_login     VARCHAR(100),
+    IN p_firstname VARCHAR(100),
+    IN p_surname   VARCHAR(100),
+    IN p_adress    VARCHAR(255),
+    IN p_phone     VARCHAR(50)
+)
+BEGIN
+    INSERT INTO `Customers` (`login`, `firstname`, `surname`, `adress`, `phone`)
+    VALUES (p_login, p_firstname, p_surname, p_adress, p_phone);
+
+    SELECT LAST_INSERT_ID() AS last_customer_id;
+END$$
+
+DELIMITER ;
+
+
+CALL add_customer(
+    'loginPoop',
+    'Ivan',
+    'Gook',
+    'г. Минск, ул. Testo, д. 1',
+    '+375291112233'
+);
+
+
+-- 2
+DROP PROCEDURE IF EXISTS find_books_by_title_text;
+DELIMITER $$
+
+CREATE PROCEDURE find_books_by_title_text(
+    IN p_text VARCHAR(200)
+)
+BEGIN
+    SELECT *
+    FROM `Books`
+    WHERE `title` LIKE CONCAT('%', p_text, '%');
+END$$
+
+DELIMITER ;
+
+
+CALL find_books_by_title_text('Гарри');
+CALL find_books_by_title_text('и');
+
+
+-- 3
+DROP PROCEDURE IF EXISTS add_author;
+DELIMITER $$
+
+CREATE PROCEDURE add_author(
+    IN  p_firstname VARCHAR(100),
+    IN  p_surname   VARCHAR(100),
+    IN  p_country   VARCHAR(100),
+    OUT p_author_id INT
+)
+BEGIN
+    INSERT INTO `Authors` (`firstname`, `surname`, `country`)
+    VALUES (p_firstname, p_surname, p_country);
+
+    SET p_author_id = LAST_INSERT_ID();
+END$$
+
+DELIMITER ;
+
+SET @new_author_id = 0;
+CALL add_author('Агата', 'Кристи', 'Великобритания', @new_author_id);
+SELECT @new_author_id AS created_author_id;
+
+
+-- 4
+DROP PROCEDURE IF EXISTS change_books_price_by_percent;
+DELIMITER $$
+
+CREATE PROCEDURE change_books_price_by_percent(
+    IN p_percent DECIMAL(6,2)
+)
+BEGIN
+    UPDATE `Books`
+    SET `price` = ROUND(`price` * (1 + p_percent / 100), 2);
+END$$
+
+DELIMITER ;
+
+
+CALL change_books_price_by_percent(5);
+SELECT `idBook`, `title`, `price` FROM `Books` ORDER BY `idBook`;
+
+
+
+-- 5
+
+DROP PROCEDURE IF EXISTS delete_authors_without_books;
+DELIMITER $$
+
+CREATE PROCEDURE delete_authors_without_books()
+BEGIN
+    DELETE FROM `Authors`
+    WHERE `idAuthor` NOT IN (
+        SELECT DISTINCT `idAuthor`
+        FROM `Books`
+        WHERE `idAuthor` IS NOT NULL
+    );
+END$$
+
+DELIMITER ;
+
+
+CALL delete_authors_without_books();
+SELECT * FROM `Authors` ORDER BY `idAuthor`;

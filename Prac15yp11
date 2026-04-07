@@ -1,0 +1,139 @@
+USE `Markets`;
+-- 1
+DROP TABLE IF EXISTS `DeletedCustomers`;
+CREATE TABLE `DeletedCustomers` (
+    `idCustomer` INT NOT NULL,
+    `login` VARCHAR(100) NOT NULL,
+    `surname` VARCHAR(100) NOT NULL,
+    `firstname` VARCHAR(100) NOT NULL,
+    `adress` VARCHAR(255) NOT NULL,
+    `phone` VARCHAR(50) NULL,
+    `deletedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+DROP TRIGGER IF EXISTS `trg_customers_after_delete`;
+DELIMITER $$
+CREATE TRIGGER `trg_customers_after_delete`
+AFTER DELETE ON `Customers`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `DeletedCustomers`
+    (`idCustomer`, `login`, `surname`, `firstname`, `adress`, `phone`, `deletedAt`)
+    VALUES
+    (OLD.`idCustomer`, OLD.`login`, OLD.`surname`, OLD.`firstname`, OLD.`adress`, OLD.`phone`, NOW());
+END$$
+DELIMITER ;
+
+-- 2
+
+DROP TABLE IF EXISTS `Logs`;
+CREATE TABLE `Logs` (
+    `idLog` INT NOT NULL AUTO_INCREMENT,
+    `tableName` VARCHAR(50) NOT NULL,
+    `operationType` VARCHAR(10) NOT NULL,
+    `eventDateTime` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `dbUser` VARCHAR(100) NOT NULL,
+    PRIMARY KEY (`idLog`)
+);
+
+DROP TRIGGER IF EXISTS `trg_books_after_insert`;
+DROP TRIGGER IF EXISTS `trg_books_after_update`;
+DROP TRIGGER IF EXISTS `trg_books_after_delete`;
+DELIMITER $$
+CREATE TRIGGER `trg_books_after_insert`
+AFTER INSERT ON `Books`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `Logs` (`tableName`, `operationType`, `eventDateTime`, `dbUser`)
+    VALUES ('Books', 'INSERT', NOW(), CURRENT_USER());
+END$$
+CREATE TRIGGER `trg_books_after_update`
+AFTER UPDATE ON `Books`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `Logs` (`tableName`, `operationType`, `eventDateTime`, `dbUser`)
+    VALUES ('Books', 'UPDATE', NOW(), CURRENT_USER());
+END$$
+CREATE TRIGGER `trg_books_after_delete`
+AFTER DELETE ON `Books`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `Logs` (`tableName`, `operationType`, `eventDateTime`, `dbUser`)
+    VALUES ('Books', 'DELETE', NOW(), CURRENT_USER());
+END$$
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS `trg_orders_after_insert`;
+DROP TRIGGER IF EXISTS `trg_orders_after_update`;
+DROP TRIGGER IF EXISTS `trg_orders_after_delete`;
+DELIMITER $$
+CREATE TRIGGER `trg_orders_after_insert`
+AFTER INSERT ON `Orders`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `Logs` (`tableName`, `operationType`, `eventDateTime`, `dbUser`)
+    VALUES ('Orders', 'INSERT', NOW(), CURRENT_USER());
+END$$
+CREATE TRIGGER `trg_orders_after_update`
+AFTER UPDATE ON `Orders`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `Logs` (`tableName`, `operationType`, `eventDateTime`, `dbUser`)
+    VALUES ('Orders', 'UPDATE', NOW(), CURRENT_USER());
+END$$
+DELIMITER ;
+
+-- 3
+DROP TRIGGER IF EXISTS `trg_orders_after_delete`;
+DELIMITER $$
+CREATE TRIGGER `trg_orders_after_delete`
+AFTER DELETE ON `Orders`
+FOR EACH ROW
+BEGIN
+
+INSERT INTO `Logs` (`tableName`, `operationType`, `eventDateTime`, `dbUser`)
+    VALUES ('Orders', 'DELETE', NOW(), CURRENT_USER());
+    DELETE c
+    FROM `Customers` c
+    LEFT JOIN `Orders` o ON o.`idCustomer` = c.`idCustomer`
+    WHERE o.`idOrder` IS NULL;
+END$$
+DELIMITER ;
+
+-- 4
+
+DROP TRIGGER IF EXISTS `trg_composition_after_insert`;
+DELIMITER $$
+CREATE TRIGGER `trg_composition_after_insert`
+AFTER INSERT ON `Books_has_Orders`
+FOR EACH ROW
+BEGIN
+    SELECT COALESCE(SUM(bho.`Count` * b.`price`), 0)
+      INTO @orderCost
+    FROM `Books_has_Orders` bho
+    JOIN `Books` b ON b.`idBook` = bho.`Books_idBook`
+    WHERE bho.`Orders_idOrder` = NEW.`Orders_idOrder`;
+END$$
+DELIMITER ;
+
+
+
+
+
+-- 1
+DELETE FROM `Customers` WHERE `idCustomer` = 4;
+SELECT * FROM `DeletedCustomers` ORDER BY `deletedAt` DESC;
+
+-- 2/3
+INSERT INTO `Books` (`idAuthor`,`title`,`genre`,`price`,`weight`,`pages`,`yearRelease`)
+VALUES (1, 'Beda Book', 'проза', 100.00, 0.2, 100, 2020);
+
+UPDATE `Books` SET `price` = 110.00 WHERE `title` = 'Beda Book';
+DELETE FROM `Books` WHERE `title` = 'Beda Book';
+
+SELECT * FROM `Logs` ORDER BY `idLog` DESC;
+
+-- 4
+SET @orderCost = NULL;
+INSERT INTO `Books_has_Orders` (`Books_idBook`, `Orders_idOrder`, `Count`)
+VALUES (1, 1, 3);
+SELECT @orderCost AS orderCost_after_insert;

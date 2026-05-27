@@ -1,0 +1,30 @@
+section data msg
+mote less
+الدن
+win do
+Vved:
+CE
+"bolshee
+menshee
+"Molodec"
+section, text global CMAIN
+CMAIN:
+mov Ibp, ISP
+mov I13, 37
+guess_1oop:
+PRINT_STRING msg
+GET_DEC 8, rax
+amp raxx x13
+Je correct
+01
+need more
+need less:
+PRINT STRING less
+NEWLINE
+jmp guess_ 1oop
+need more:
+PRINT STRING more
+NEWLINE
+imp guess_loop
+correct:
+PRINT_STRING win

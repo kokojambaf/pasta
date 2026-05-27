@@ -1,0 +1,48 @@
+%include "io.inc"
+
+section .data
+    secret      dd 7
+
+    msgInput    db "Введите число: ", 0
+    msgMore     db "Требуется ввести большее число", 10, 0
+    msgLess     db "Требуется ввести меньшее число", 10, 0
+    msgWin      db "Молодец! Вы угадали число!", 10, 0
+
+section .bss
+    num resd 1
+
+section .text
+global CMAIN
+
+CMAIN:
+    mov ebp, esp
+
+guess_loop:
+
+    ; Вывод приглашения
+    PRINT_STRING msgInput
+
+    ; Ввод числа
+    GET_DEC 4, [num]
+
+    ; Сравнение
+    mov eax, [num]
+    cmp eax, [secret]
+
+    je win
+    jl need_more
+    jg need_less
+
+need_more:
+    PRINT_STRING msgMore
+    jmp guess_loop
+
+need_less:
+    PRINT_STRING msgLess
+    jmp guess_loop
+
+win:
+    PRINT_STRING msgWin
+
+    xor eax, eax
+    ret

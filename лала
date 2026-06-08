@@ -1,0 +1,82 @@
+; main.asm
+; NASM x64, Windows
+; Считывает два катета double, считает гипотенузу через x87 FPU,
+; выводит результат через printf и предлагает повторить через MessageBox.
+
+default rel
+
+extern printf
+extern scanf
+extern MessageBoxA
+extern ExitProcess
+
+global main
+
+%define MB_YESNO          4
+%define MB_ICONQUESTION   32
+%define IDYES             6
+
+section .data
+    input_msg   db "Enter two legs separated by space: ", 0
+    scan_fmt    db "%lf %lf", 0
+    print_fmt   db "Hypotenuse = %.10lf", 10, 0
+
+    mb_text     db "Repeat input?", 0
+    mb_caption  db "Program", 0
+
+    a           dq 0.0
+    b           dq 0.0
+    c           dq 0.0
+
+section .text
+
+main:
+    ; Win64 calling convention:
+    ; 32 байта shadow space + выравнивание стека
+    sub rsp, 40
+
+input_loop:
+    ; printf("Enter two legs separated by space: ");
+    lea rcx, [input_msg]
+    call printf
+
+    ; scanf("%lf %lf", &a, &b);
+    lea rcx, [scan_fmt]
+    lea rdx, [a]
+    lea r8,  [b]
+    call scanf
+
+    ; c = sqrt(a*a + b*b)
+    ; Используется математический сопроцессор x87
+    finit
+
+    fld  qword [a]        ; ST0 = a
+    fmul qword [a]        ; ST0 = a * a
+
+    fld  qword [b]        ; ST0 = b, ST1 = a*a
+    fmul qword [b]        ; ST0 = b * b
+
+    faddp st1, st0        ; ST0 = a*a + b*b
+    fsqrt                 ; ST0 = sqrt(a*a + b*b)
+    fstp qword [c]        ; c = ST0
+
+    ; printf("Hypotenuse = %.10lf\n", c);
+    ; Для printf double передаём через обычный регистр.
+    lea rcx, [print_fmt]
+    mov rdx, [c]
+    call printf
+
+    ; MessageBoxA(NULL, "Repeat input?", "Program", MB_YESNO | MB_ICONQUESTION);
+    xor rcx, rcx
+    lea rdx, [mb_text]
+    lea r8,  [mb_caption]
+    mov r9d, MB_YESNO | MB_ICONQUESTION
+    call MessageBoxA
+
+    ; Если нажали Yes — повторяем ввод
+    cmp eax, IDYES
+    je input_loop
+
+    ; ExitProcess(0)
+    xor ecx, ecx
+    call ExitProcess

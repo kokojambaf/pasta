@@ -1,0 +1,91 @@
+; Лабораторная работа №5
+; NASM x64 для SASM
+
+global main
+
+extern scanf
+extern printf
+extern MessageBoxA
+
+section .data
+    fmtIn      db "%lf %lf", 0
+    fmtOut     db "Hypotenuse = %.6lf", 10, 0
+
+    msgText    db "Repeat input?", 0
+    msgCaption db "Laboratory work #5", 0
+
+    cat1       dq 0.0
+    cat2       dq 0.0
+    hypotenuse dq 0.0
+
+section .text
+
+main:
+
+repeat_input:
+
+    ; scanf("%lf %lf", &cat1, &cat2)
+
+    sub rsp, 40
+
+    mov rcx, fmtIn
+    mov rdx, cat1
+    mov r8,  cat2
+
+    call scanf
+
+    add rsp, 40
+
+
+    ; ===== Вычисление гипотенузы =====
+    ; hyp = sqrt(cat1^2 + cat2^2)
+
+    fld qword [cat1]      ; st0 = cat1
+    fmul st0, st0         ; cat1^2
+
+    fld qword [cat2]      ; st0 = cat2, st1 = cat1^2
+    fmul st0, st0         ; cat2^2
+
+    faddp st1, st0        ; cat1^2 + cat2^2
+
+    fsqrt                 ; sqrt(...)
+
+    fstp qword [hypotenuse]
+
+
+    ; printf("Hypotenuse = %.6lf\n", hypotenuse)
+
+    sub rsp, 40
+
+    mov rcx, fmtOut
+
+    movsd xmm1, [hypotenuse]
+    mov al, 1             ; количество XMM-параметров
+
+    call printf
+
+    add rsp, 40
+
+
+    ; MessageBoxA(NULL,
+    ;             "Repeat input?",
+    ;             "Laboratory work #5",
+    ;             MB_YESNO)
+
+    sub rsp, 40
+
+    xor rcx, rcx          ; hWnd = NULL
+    mov rdx, msgText
+    mov r8,  msgCaption
+    mov r9d, 4            ; MB_YESNO
+
+    call MessageBoxA
+
+    add rsp, 40
+
+    ; IDYES = 6
+    cmp eax, 6
+    je repeat_input
+
+    xor eax, eax
+    ret
